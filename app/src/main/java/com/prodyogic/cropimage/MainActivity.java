@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -33,10 +32,6 @@ public class MainActivity extends AppCompatActivity {
     /**
      * On load image button click, start pick  image chooser activity.
      */
-    public void onLoadImageClick(View view) {
-        startActivityForResult(getPickImageChooserIntent(), 200);
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -54,21 +49,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return (super.onOptionsItemSelected(item));
-    }
-
-    public Intent getPickImageChooserIntent() {
-        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(cameraIntent, CAMERA_REQUEST);
-
-// collect all gallery intents
-        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        galleryIntent.setType("image/*");
-        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);//
-        startActivityForResult(Intent.createChooser(galleryIntent, "Select File"), SELECT_FILE);
-
-// Create a chooser from the main  intent
-        Intent chooserIntent = Intent.createChooser(galleryIntent, "Select source");
-        return chooserIntent;
     }
 
     @Override
@@ -95,7 +75,28 @@ public class MainActivity extends AppCompatActivity {
 
 }
 
-   /* protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+   /*
+
+    public void onLoadImageClick(View view) {
+        startActivityForResult(getPickImageChooserIntent(), 200);
+    }
+
+    public Intent getPickImageChooserIntent() {
+        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+
+// collect all gallery intents
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.setType("image/*");
+        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);//
+        startActivityForResult(Intent.createChooser(galleryIntent, "Select File"), SELECT_FILE);
+
+// Create a chooser from the main  intent
+        Intent chooserIntent = Intent.createChooser(galleryIntent, "Select source");
+        return chooserIntent;
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
             mCropImageView.setImageBitmap(photo);
