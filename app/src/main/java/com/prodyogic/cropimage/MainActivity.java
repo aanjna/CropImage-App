@@ -1,47 +1,33 @@
 package com.prodyogic.cropimage;
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.soundcloud.android.crop.Crop;
+
 import java.io.File;
-import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 1000;
-    private CropImageView mCropImageView;
     private static final int SELECT_FILE = 1001;
     private final int RESULT_CROP = 400;
+    private ImageView mCropImageView;
+    private Uri picUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mCropImageView = (CropImageView) findViewById(R.id.ci_view);
-        Button b = (Button) findViewById(R.id.btn_crop);
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                DisplayActivity.imageToShow = mCropImageView.crop(MainActivity.this);
-                startActivity(new Intent(MainActivity.this, DisplayActivity.class));
-                Log.e("crop", "call");
-
-            }
-        });
+        mCropImageView = (ImageView) findViewById(R.id.ci_view);
     }
 
     /**
@@ -62,14 +48,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_crop) {
-
+            mCropImageView.setImageDrawable(null);
+            Crop.pickImage(this);
+            return true;
         }
 
         return (super.onOptionsItemSelected(item));
     }
 
     public Intent getPickImageChooserIntent() {
-
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(cameraIntent, CAMERA_REQUEST);
 
@@ -79,13 +66,36 @@ public class MainActivity extends AppCompatActivity {
         galleryIntent.setAction(Intent.ACTION_GET_CONTENT);//
         startActivityForResult(Intent.createChooser(galleryIntent, "Select File"), SELECT_FILE);
 
-
 // Create a chooser from the main  intent
         Intent chooserIntent = Intent.createChooser(galleryIntent, "Select source");
         return chooserIntent;
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent result) {
+        if (requestCode == Crop.REQUEST_PICK && resultCode == RESULT_OK) {
+            beginCrop(result.getData());
+        } else if (requestCode == Crop.REQUEST_CROP) {
+            handleCrop(resultCode, result);
+        }
+    }
+
+    private void beginCrop(Uri source) {
+        Uri destination = Uri.fromFile(new File(getCacheDir(), "cropped"));
+        Crop.of(source, destination).asSquare().start(this);
+    }
+
+    private void handleCrop(int resultCode, Intent result) {
+        if (resultCode == RESULT_OK) {
+            mCropImageView.setImageURI(Crop.getOutput(result));
+        } else if (resultCode == Crop.RESULT_ERROR) {
+            Toast.makeText(this, Crop.getError(result).getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+}
+
+   /* protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
             mCropImageView.setImageBitmap(photo);
@@ -108,36 +118,7 @@ public class MainActivity extends AppCompatActivity {
         mCropImageView.setImageBitmap(bm);
     }
 
-    private void performCrop(String picUri) {
-        try {
-            //Start Crop Activity
+    private void performCrop() {
 
-            Intent cropIntent = new Intent("com.android.camera.action.CROP");
-            // indicate image type and Uri
-            File f = new File(picUri);
-            Uri contentUri = Uri.fromFile(f);
-
-            cropIntent.setDataAndType(contentUri, "image/*");
-            // set crop properties
-            cropIntent.putExtra("crop", "true");
-            // indicate aspect of desired crop
-            cropIntent.putExtra("aspectX", 1);
-            cropIntent.putExtra("aspectY", 1);
-            // indicate output X and Y
-            cropIntent.putExtra("outputX", 280);
-            cropIntent.putExtra("outputY", 280);
-
-            // retrieve data on return
-            cropIntent.putExtra("return-data", true);
-            // start the activity - we handle returning in onActivityResult
-            startActivityForResult(cropIntent, RESULT_CROP);
-        }
-        // respond to users whose devices do not support the crop action
-        catch (ActivityNotFoundException anfe) {
-            // display an error message
-            String errorMessage = "your device doesn't support the crop action!";
-            Toast toast = Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT);
-            toast.show();
-        }
     }
-}
+}*/
